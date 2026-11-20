@@ -8,6 +8,8 @@ Python-first cryptocurrency market surveillance and arbitrage research platform.
 - Configurable multi-exchange public spot ticker collection through CCXT.
 - Default exchange universe: Binance, Bybit, OKX, KuCoin, Gate, Bitget, MEXC, Crypto.com, Coinbase, Kraken, Bitstamp, Gemini, Bitfinex, BingX, Phemex, Poloniex, Bitvavo, BitMart, CoinEx, LBank, DigiFinex, HTX, WhiteBIT, Backpack, HashKey, Bitrue, Bitso, bitbank, bitFlyer and Bithumb.
 - Cross-exchange bid/ask comparison for configured symbols.
+- Ranked candidate view: only comparisons with known public taker-fee metadata and fee-adjusted net edge above a configurable threshold are shown as candidates. Raw pairwise combinations are not labelled as opportunities.
+- Candidate status is preliminary until order-book depth and execution constraints are validated.
 - Freshness-aware comparisons: quotes without a valid exchange timestamp or older than the configured threshold are excluded from spread calculations.
 - Transparent fee handling: net estimates are shown only when both markets expose a taker-fee value. Public/default fee metadata is not the user's account-specific fee tier.
 - No fabricated prices, sample opportunities, seeded trades or placeholder performance figures.
@@ -33,6 +35,7 @@ Copy `.env.example` to `.env` to override settings.
 - `ARBIS_REQUEST_TIMEOUT_MS`: request timeout in milliseconds, default `10000`.
 - `ARBIS_MAX_DATA_AGE_SECONDS`: maximum quote age for spread calculations, default `30`.
 - `ARBIS_MAX_EXCHANGE_WORKERS`: concurrent exchange workers, default `6`.
+- `ARBIS_MIN_NET_EDGE_PCT`: minimum fee-adjusted estimated net edge to display as a candidate, default `0.10` percent.
 
 ## Data integrity rules
 
