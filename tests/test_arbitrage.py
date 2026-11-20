@@ -34,3 +34,11 @@ def test_missing_fee_metadata_does_not_invent_net_profit():
     )
     assert forward["net_per_unit"] is None
     assert forward["net_pct"] is None
+
+
+def test_rejects_invalid_bid_ask_rows():
+    rows = [
+        {"exchange": "venue_a", "symbol": "BTC/USDT", "ask": 0, "bid": 99},
+        {"exchange": "venue_b", "symbol": "BTC/USDT", "ask": 100, "bid": 101},
+    ]
+    assert find_cross_exchange_opportunities(rows, ["BTC/USDT"]) == []
