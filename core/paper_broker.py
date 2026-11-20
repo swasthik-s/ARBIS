@@ -30,6 +30,12 @@ class PaperBroker:
             **route,
             "mode": "PAPER",
             "status": "simulated_fill",
+            "route_key": "|".join([
+                opportunity["symbol"], opportunity["buy_exchange"], opportunity["sell_exchange"],
+                str(opportunity["buy_book"].get("timestamp")), str(opportunity["sell_book"].get("timestamp")),
+            ]),
         }
-        self.store.record_trade(trade)
+        inserted = self.store.record_trade(trade)
+        if not inserted:
+            return {"status": "duplicate_snapshot", "reason": "this exact book snapshot was already simulated"}
         return trade
