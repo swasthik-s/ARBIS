@@ -5,7 +5,7 @@ from typing import Any
 
 import ccxt
 
-from config import EXCHANGE_IDS, REQUEST_TIMEOUT_MS, MAX_EXCHANGE_WORKERS
+from arbis_config import EXCHANGE_IDS, REQUEST_TIMEOUT_MS, MAX_EXCHANGE_WORKERS
 
 # CCXT renamed some exchange identifiers across releases. Try compatible aliases.
 EXCHANGE_ALIASES = {
