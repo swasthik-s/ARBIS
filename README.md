@@ -61,3 +61,21 @@ Deploy the Streamlit dashboard on a host that supports Streamlit. For reliable 2
 ## UAE and operational note
 
 This exchange list is a technical integration list, not a UAE regulatory approval list or a guarantee that a platform will serve a UAE resident. Check the exact contracting entity, licensed activity, product eligibility, exchange terms and hosting-region access before using an exchange or enabling execution. VARA's public register is the primary source for Dubai (excluding DIFC) VASP status: https://www.vara.ae/en/licenses-and-register/public-register/
+
+## Run the continuous paper bot
+
+The scanner is separate from the Streamlit dashboard. It reads public order books, evaluates fixed-size fills across both books, subtracts public taker-fee metadata, rejects stale/insufficient-depth books, and records paper fills in SQLite.
+
+```bash
+python bot.py --interval 5 --quantity 0.001 --min-edge-pct 0.10
+```
+
+Useful modes:
+
+- `python bot.py --once`: perform one scan and exit.
+- `python bot.py --no-paper`: scan and log candidates without recording paper fills.
+- `python -m pytest -q`: run deterministic unit tests.
+
+Default operation is PAPER ONLY. It never creates exchange orders and assumes quote/base inventory is already available on both venues. The current paper broker is a research simulator, not an exchange execution emulator: it does not yet model queue position, partial fills over time, inventory limits, withdrawal/transfer settlement, funding, or adverse selection. Do not use its results as proof of live profitability.
+
+For a production deployment, run `bot.py` as a persistent worker with durable storage and process supervision. Streamlit Community Cloud is only the dashboard, not the always-on bot host.
