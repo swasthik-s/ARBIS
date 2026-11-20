@@ -28,8 +28,15 @@ def _stop(*_):
 
 
 def make_exchange(exchange_id: str):
-    cls = getattr(ccxt, exchange_id, None)
+    aliases = {"gate": ("gate", "gateio"), "gateio": ("gateio", "gate"),
+               "htx": ("htx", "huobi")}
+    cls = None
+    for candidate in aliases.get(exchange_id, (exchange_id,)):
+        cls = getattr(ccxt, candidate, None)
+        if cls is not None:
+            break
     if cls is None:
+        log.warning("%s is not available in the installed CCXT package", exchange_id)
         return None
     return cls({"enableRateLimit": True, "timeout": 12000, "options": {"defaultType": "spot"}})
 
