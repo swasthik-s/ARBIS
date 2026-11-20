@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import streamlit as st
 
-from arbis_config import (
+from config import (
     EXCHANGE_IDS, EXCHANGE_NAMES, MAX_DATA_AGE_SECONDS, MIN_NET_EDGE_PCT, SYMBOLS,
 )
 from engines.arbitrage import find_cross_exchange_opportunities
