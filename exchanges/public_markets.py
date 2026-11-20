@@ -29,7 +29,9 @@ def _fetch_tickers(exchange, symbols: list[str]) -> dict[str, Any]:
     if exchange.has.get("fetchTickers"):
         try:
             return exchange.fetch_tickers(symbols)
-        except (ccxt.NotSupported, ccxt.ArgumentsRequired):
+        except Exception:
+            # Some venues allow only one symbol per ticker request.
+            # Fall back to individual ticker calls rather than failing the venue.
             pass
 
     tickers: dict[str, Any] = {}
