@@ -28,9 +28,14 @@ class Store:
                     sell_exchange TEXT NOT NULL,
                     net_pnl REAL NOT NULL,
                     net_edge_pct REAL NOT NULL,
+                    route_key TEXT UNIQUE,
                     payload TEXT NOT NULL
                 );
             """)
+            columns = {row[1] for row in db.execute("PRAGMA table_info(paper_trades)")}
+            if "route_key" not in columns:
+                db.execute("ALTER TABLE paper_trades ADD COLUMN route_key TEXT")
+                db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_paper_route_key ON paper_trades(route_key)")
 
     def _connect(self):
         db = sqlite3.connect(self.path, timeout=30)
@@ -44,17 +49,18 @@ class Store:
                 (observed_at, exchange_id, symbol, json.dumps(payload, allow_nan=False)),
             )
 
-    def record_trade(self, trade: dict[str, Any]):
+    def record_trade(self, trade: dict[str, Any]) -> bool:
         with self._connect() as db:
-            db.execute(
-                """INSERT INTO paper_trades
-                (id,created_at,symbol,buy_exchange,sell_exchange,net_pnl,net_edge_pct,payload)
-                VALUES(?,?,?,?,?,?,?,?)""",
+            cursor = db.execute(
+                """INSERT OR IGNORE INTO paper_trades
+                (id,created_at,symbol,buy_exchange,sell_exchange,net_pnl,net_edge_pct,route_key,payload)
+                VALUES(?,?,?,?,?,?,?,?,?)""",
                 (trade["id"], trade["created_at"], trade["symbol"],
                  trade["buy_exchange"], trade["sell_exchange"],
-                 trade["net_pnl"], trade["net_edge_pct"],
+                 trade["net_pnl"], trade["net_edge_pct"], trade.get("route_key"),
                  json.dumps(trade, allow_nan=False)),
             )
+            return cursor.rowcount == 1
 
     def summary(self) -> dict[str, Any]:
         with self._connect() as db:
