@@ -54,9 +54,16 @@ Copy `.env.example` to `.env` to override settings.
 - Next: separate derivatives adapters for perpetual swaps, dated futures and funding rates. These must use contract-aware symbols and contract metadata, not be mixed into spot comparisons.
 - Later: dedicated DEX/on-chain adapters for pool reserves, swap quotes, gas, MEV and chain finality. DEX data must not be treated as a centralized exchange ticker.
 
-## Deployment
+## Deployment — Streamlit is the primary application
 
-Deploy the Streamlit dashboard on a host that supports Streamlit. For reliable 24/7 collection, run a separate always-on collector/worker and persist timestamped observations. Streamlit Community Cloud should not be treated as an always-on market-data worker.
+The primary ARBIS application is Streamlit. Run the dashboard and scanner together on your Docker host; the dashboard is the control/visibility surface and the worker performs continuous market collection and paper evaluation. Both services share the persistent SQLite data volume.
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+```
+
+Open `http://YOUR_SERVER:8501`. Configure `ARBIS_UI_PORT`, `ARBIS_SCAN_INTERVAL`, `ARBIS_ORDER_QUANTITY`, `ARBIS_MIN_NET_EDGE_PCT`, `ARBIS_SYMBOLS` and `ARBIS_EXCHANGES` in `.env`, then restart with `docker compose up -d --build`. Use `docker compose logs -f arbis-worker` to inspect the scanner and `docker compose logs -f arbis-ui` for the dashboard. Streamlit Community Cloud is not the production runtime for this deployment.
 
 ## UAE and operational note
 
@@ -78,4 +85,4 @@ Useful modes:
 
 Default operation is PAPER ONLY. It never creates exchange orders and assumes quote/base inventory is already available on both venues. The current paper broker is a research simulator, not an exchange execution emulator: it does not yet model queue position, partial fills over time, inventory limits, withdrawal/transfer settlement, funding, or adverse selection. Do not use its results as proof of live profitability.
 
-For a production deployment, run `bot.py` as a persistent worker with durable storage and process supervision. Streamlit Community Cloud is only the dashboard, not the always-on bot host.
+The Docker Compose deployment runs both the Streamlit primary app and a separate persistent paper worker against the same durable volume. Paper-only mode remains enforced.
