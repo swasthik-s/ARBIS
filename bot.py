@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 
 import ccxt
 
-from arbis_config import EXCHANGE_IDS, SYMBOLS
+from config import EXCHANGE_IDS, SYMBOLS
 from core.paper_broker import PaperBroker
 from core.store import Store
 from core.orderbook import evaluate_route
