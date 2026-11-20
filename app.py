@@ -21,11 +21,8 @@ with st.sidebar:
         options=list(SYMBOLS),
         default=list(SYMBOLS),
     )
-    refresh_seconds = st.number_input(
-        "Refresh interval (seconds)", min_value=10, max_value=120, value=30, step=5
-    )
     refresh = st.button("Refresh market data", type="primary", use_container_width=True)
-    st.caption("Public endpoints only. No trading credentials or order execution.")
+    st.caption("Refresh manually to request fresh exchange data. Public endpoints only; no trading credentials or order execution.")
 
 if "market_results" not in st.session_state:
     st.session_state.market_results = []
