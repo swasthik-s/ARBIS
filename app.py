@@ -5,7 +5,7 @@ import pandas as pd
 import streamlit as st
 
 from arbis_config import (
-    EXCHANGE_IDS, EXCHANGE_NAMES, MAX_DATA_AGE_SECONDS, SYMBOLS,
+    EXCHANGE_IDS, EXCHANGE_NAMES, MAX_DATA_AGE_SECONDS, MIN_NET_EDGE_PCT, SYMBOLS,
 )
 from engines.arbitrage import find_cross_exchange_opportunities
 from exchanges.public_markets import fetch_public_markets
@@ -88,11 +88,13 @@ elif not selected_symbols:
     st.info("Select at least one trading pair in the sidebar.")
 else:
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Exchanges responding", f"{len(connected)} / {len(selected_exchanges)}")
+    col1.metric("Exchanges returning selected pairs", f"{sum(1 for r in results if r['status'] == 'connected')} / {len(selected_exchanges)}")
     col2.metric("Ticker records", len(all_rows))
     col3.metric("Fresh bid/ask quotes", len(fresh_rows))
-    opportunities = find_cross_exchange_opportunities(fresh_rows, selected_symbols)
-    col4.metric("Fresh cross-venue comparisons", len(opportunities))
+    all_comparisons = find_cross_exchange_opportunities(fresh_rows, selected_symbols)
+    opportunities = [item for item in all_comparisons if item["net_pct"] is not None and item["net_pct"] >= MIN_NET_EDGE_PCT]
+    opportunities.sort(key=lambda item: item["net_pct"], reverse=True)
+    col4.metric("Fee-positive candidates", len(opportunities))
 
     st.subheader("Exchange connectivity")
     status_rows = [{
@@ -119,11 +121,16 @@ else:
     else:
         st.info("No ticker records were returned by the selected exchanges.")
 
-    st.subheader("Cross-exchange spread observations")
+    st.subheader("Ranked fee-adjusted candidates")
+    st.caption(
+        f"Showing only candidates with known public taker fees and estimated net edge "
+        f"of at least {MIN_NET_EDGE_PCT:.3f}%. Raw pairwise comparisons: {len(all_comparisons)}. "
+        "A candidate is not executable until order-book depth, latency and account-specific fees are checked."
+    )
     if not opportunities:
         st.info(
-            "No fresh cross-exchange bid/ask comparisons are available. "
-            "At least two exchanges must return timestamped, fresh quotes for the same pair."
+            "No candidates currently meet the fee-adjusted edge threshold. "
+            "This is a valid result; no artificial opportunities are generated."
         )
     else:
         opportunity_rows = [{
@@ -134,9 +141,11 @@ else:
             "Sell bid": item["sell_bid"],
             "Gross spread %": item["gross_spread_pct"],
             "Estimated net %": item["net_pct"],
+            "Estimated net per unit": item["net_per_unit"],
             "Buy quote timestamp": item["buy_timestamp"],
             "Sell quote timestamp": item["sell_timestamp"],
             "Fee basis": item["fee_basis"],
+            "Validation": "Ticker-level candidate; order-book depth not yet checked",
         } for item in opportunities]
         st.dataframe(pd.DataFrame(opportunity_rows), use_container_width=True, hide_index=True)
         st.caption(
