@@ -5,42 +5,56 @@ Python-first cryptocurrency market surveillance and arbitrage research platform.
 ## Current scope
 
 - Streamlit dashboard using Streamlit's default UI.
-- Live public spot ticker collection from Binance, Bybit and OKX through CCXT.
-- Cross-exchange bid/ask comparison for configured USDT pairs.
-- Transparent fee handling: net estimates are shown only when both markets expose a taker-fee value. Public/default fee metadata is an estimate, not the user's account-specific fee tier.
+- Configurable multi-exchange public spot ticker collection through CCXT.
+- Default exchange universe: Binance, Bybit, OKX, KuCoin, Gate, Bitget, MEXC, Crypto.com, Coinbase, Kraken, Bitstamp, Gemini, Bitfinex, BingX, Phemex, Poloniex, Bitvavo, BitMart, CoinEx, LBank, DigiFinex, HTX, WhiteBIT, Backpack, HashKey, Bitrue, Bitso, bitbank, bitFlyer and Bithumb.
+- Cross-exchange bid/ask comparison for configured symbols.
+- Freshness-aware comparisons: quotes without a valid exchange timestamp or older than the configured threshold are excluded from spread calculations.
+- Transparent fee handling: net estimates are shown only when both markets expose a taker-fee value. Public/default fee metadata is not the user's account-specific fee tier.
 - No fabricated prices, sample opportunities, seeded trades or placeholder performance figures.
 - No private API keys and no live order execution.
+
+CCXT currently documents support for more than 100 exchange APIs. ARBIS deliberately starts with a curated subset of spot-capable centralized venues rather than indiscriminately querying every adapter. Some CCXT exchange IDs differ by library version; an unavailable adapter is reported explicitly.
 
 ## Run locally
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+source .venv/bin/activate  # Windows: .venv\\Scripts\\activate
 pip install -r requirements.txt
 streamlit run app.py
 ```
 
 ## Configuration
 
-Copy `.env.example` to `.env` if you want to override the default symbols or request timeout. The initial version uses public market endpoints and does not require exchange credentials.
+Copy `.env.example` to `.env` to override settings.
 
-- `ARBIS_SYMBOLS`: comma-separated CCXT spot symbols, default `BTC/USDT,ETH/USDT,SOL/USDT`.
-- `ARBIS_REQUEST_TIMEOUT_MS`: exchange request timeout in milliseconds, default `10000`.
+- `ARBIS_SYMBOLS`: comma-separated CCXT symbols, default `BTC/USDT,ETH/USDT,SOL/USDT`.
+- `ARBIS_EXCHANGES`: comma-separated CCXT exchange IDs. Defaults to the curated exchange universe in `config.py`.
+- `ARBIS_REQUEST_TIMEOUT_MS`: request timeout in milliseconds, default `10000`.
+- `ARBIS_MAX_DATA_AGE_SECONDS`: maximum quote age for spread calculations, default `30`.
+- `ARBIS_MAX_EXCHANGE_WORKERS`: concurrent exchange workers, default `6`.
 
 ## Data integrity rules
 
-1. Only successful exchange responses are displayed as market data.
-2. Failed or stale responses are reported as unavailable; they are never replaced with invented values.
-3. A cross-exchange opportunity requires a valid buy ask and sell bid from different venues.
-4. Net estimates are omitted when taker-fee metadata is missing.
-5. Displayed public fee metadata may differ from account-specific fees, discounts and actual execution costs.
-6. The scanner does not account for transfer, withdrawal, funding, inventory, latency or market-impact costs. A displayed spread is not a guaranteed executable arbitrage.
-7. The application is monitoring/research software. It does not place orders.
+1. Only actual exchange API responses are displayed as market data.
+2. Configured, supported, reachable, responding and usable are different states. A configured venue is not assumed to be accessible.
+3. Failed or stale responses remain unavailable; they are never replaced with invented values.
+4. A spread comparison requires timestamped fresh bid/ask quotes from two different venues for the same symbol.
+5. Net estimates are omitted when taker-fee metadata is missing.
+6. Public fee metadata may differ from account-specific fees, discounts and actual execution costs.
+7. The scanner does not yet account for transfer, withdrawal, funding, inventory, latency, market impact or partial-fill costs. A displayed spread is not a guaranteed executable arbitrage.
+8. The application does not place orders.
+
+## Market coverage roadmap
+
+- Current: centralized spot market adapters through CCXT.
+- Next: separate derivatives adapters for perpetual swaps, dated futures and funding rates. These must use contract-aware symbols and contract metadata, not be mixed into spot comparisons.
+- Later: dedicated DEX/on-chain adapters for pool reserves, swap quotes, gas, MEV and chain finality. DEX data must not be treated as a centralized exchange ticker.
 
 ## Deployment
 
-Deploy the Streamlit dashboard on a host that supports Streamlit. For reliable 24/7 market collection, run the collector as a separate always-on worker; do not rely on a dashboard process or free-tier app sleeping behavior as a continuous data service.
+Deploy the Streamlit dashboard on a host that supports Streamlit. For reliable 24/7 collection, run a separate always-on collector/worker and persist timestamped observations. Streamlit Community Cloud should not be treated as an always-on market-data worker.
 
-## Regulatory and operational note
+## UAE and operational note
 
-Use public endpoints for the initial release. Verify applicable UAE requirements, exchange eligibility and exchange terms before enabling any trading or third-party service functionality.
+This exchange list is a technical integration list, not a UAE regulatory approval list or a guarantee that a platform will serve a UAE resident. Check the exact contracting entity, licensed activity, product eligibility, exchange terms and hosting-region access before using an exchange or enabling execution. VARA's public register is the primary source for Dubai (excluding DIFC) VASP status: https://www.vara.ae/en/licenses-and-register/public-register/
