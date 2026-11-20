@@ -1,0 +1,15 @@
+services:
+  arbis-bot:
+    build: .
+    container_name: arbis-paper-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      ARBIS_MAX_EXCHANGE_WORKERS: "6"
+    volumes:
+      - arbis-data:/app/data
+    command: ["python", "bot.py", "--interval", "5", "--quantity", "0.001", "--min-edge-pct", "0.10"]
+
+volumes:
+  arbis-data:
