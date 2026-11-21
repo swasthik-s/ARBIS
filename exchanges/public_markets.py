@@ -45,7 +45,7 @@ def _fetch_tickers(exchange, symbols: list[str]) -> dict[str, Any]:
 
 
 def _fetch_exchange(exchange_id: str, symbols: tuple[str, ...]) -> dict[str, Any]:
-    exchange_class = _exchange_class(exchange_id)
+    if exchange_id == "binance":\n        return _binance_public_markets(symbols)\n\n    exchange_class = _exchange_class(exchange_id)
     result: dict[str, Any] = {
         "exchange": exchange_id,
         "status": "error",
