@@ -117,3 +117,25 @@ it is not a fallback URL for Binance Global. The venues have separate market
 lists, order books, accounts and API credentials. Market symbols must be
 loaded and checked independently on each venue. A pair missing on one venue
 is not synthesized or substituted.
+
+## Execution boundary
+
+ARBIS remains PAPER by default. The first authenticated execution adapter is
+restricted to Binance Spot Testnet via CCXT sandbox mode. It requires the
+dedicated `ARBIS_BINANCE_TESTNET_API_KEY` and
+`ARBIS_BINANCE_TESTNET_SECRET` credentials. Do not use production credentials
+for this adapter. The adapter exposes balance, limit-order, order-status and
+cancel operations on the test network only.
+
+Create test credentials at the official Binance Spot Test Network. Add them to
+the private `.env` file on the Docker host; never commit the file or paste
+secrets into chat. Rebuild/restart containers after setting environment
+variables. The test network uses virtual funds and does not represent live
+liquidity or prove profitability.
+
+Risk checks are fail-closed: LIVE mode is rejected. The current testnet adapter
+is a low-level integration component, not yet a coordinated two-exchange
+arbitrage executor. Cross-venue execution requires pre-funded balances on both
+venues, per-leg state reconciliation, partial-fill hedging, idempotent client
+order IDs, emergency cancellation and recovery tests. Do not enable production
+trading until these are implemented and independently validated.
