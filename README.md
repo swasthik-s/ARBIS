@@ -108,3 +108,12 @@ The Binance dashboard adapter currently does not claim account-specific
 taker fees. It marks fee data unavailable until a separate approved fee source
 is integrated; therefore it must not be treated as a fee-confirmed arbitrage
 candidate solely on ticker data.
+
+### Binance Global vs Binance.US
+
+ARBIS treats `binance` and `binanceus` as separate venues. Binance.US is
+queried through CCXT's dedicated `binanceus` adapter and its own API host;
+it is not a fallback URL for Binance Global. The venues have separate market
+lists, order books, accounts and API credentials. Market symbols must be
+loaded and checked independently on each venue. A pair missing on one venue
+is not synthesized or substituted.
