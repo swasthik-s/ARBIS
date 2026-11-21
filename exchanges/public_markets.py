@@ -8,6 +8,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 import ccxt
+import os
 
 from config import EXCHANGE_IDS, REQUEST_TIMEOUT_MS, MAX_EXCHANGE_WORKERS
 
@@ -127,14 +128,23 @@ def _fetch_exchange(exchange_id: str, symbols: tuple[str, ...]) -> dict[str, Any
     }
     if exchange_class is None:
         result["status"] = "unsupported_in_installed_ccxt"
-        result["error"] = "Exchange id is not available in the installed CCXT version."
+        result["error"] = f"CCXT {getattr(ccxt, '__version__', 'unknown')} does not expose adapter {exchange_id!r}."
         return result
 
-    exchange = exchange_class({
+    exchange_config = {
         "enableRateLimit": True,
         "timeout": REQUEST_TIMEOUT_MS,
         "options": {"defaultType": "spot"},
-    })
+    }
+    # Explicit operator-selected Bybit regional API hostname.
+    if exchange_id == "bybit":
+        bybit_host = os.getenv("ARBIS_BYBIT_API_HOST", "").strip()
+        if bybit_host:
+            exchange_config["urls"] = {"api": {
+                "public": f"https://{bybit_host}",
+                "private": f"https://{bybit_host}",
+            }}
+    exchange = exchange_class(exchange_config)
     try:
         markets = exchange.load_markets()
         available = [
@@ -168,7 +178,14 @@ def _fetch_exchange(exchange_id: str, symbols: tuple[str, ...]) -> dict[str, Any
             })
         result["status"] = "connected" if result["rows"] else "connected_no_ticker_data"
     except Exception as exc:
-        result["error"] = f"{type(exc).__name__}: {exc}"[:400]
+        message = str(exc)
+        result["error"] = f"{type(exc).__name__}: {message}"[:400]
+        if "configured to block access from your country" in message.lower():
+            result["status"] = "regional_restriction"
+        elif "403 forbidden" in message.lower():
+            result["status"] = "access_denied"
+        elif "ratelimitexceeded" in type(exc).__name__.lower():
+            result["status"] = "rate_limited"
     finally:
         try:
             exchange.close()
