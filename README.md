@@ -86,3 +86,25 @@ Useful modes:
 Default operation is PAPER ONLY. It never creates exchange orders and assumes quote/base inventory is already available on both venues. The current paper broker is a research simulator, not an exchange execution emulator: it does not yet model queue position, partial fills over time, inventory limits, withdrawal/transfer settlement, funding, or adverse selection. Do not use its results as proof of live profitability.
 
 The Docker Compose deployment runs both the Streamlit primary app and a separate persistent paper worker against the same durable volume. Paper-only mode remains enforced.
+
+### Binance cloud connectivity
+
+ARBIS uses Binance's official public market-data-only REST host,
+`https://data-api.binance.vision`, for the dashboard's Binance spot market
+metadata and 24-hour ticker observations. This host is documented by Binance
+for unauthenticated public market data; it does not provide account or order
+endpoints. The paper scanner is configured to use the same public host for
+CCXT public REST calls.
+
+No Binance API key is required for this public-data path. A cloud provider's
+egress IP and hosting region still determine whether Binance will serve it.
+HTTP 451 is reported as `regional_restriction`; ARBIS does not rotate domains,
+use proxies, or otherwise attempt to evade regional restrictions. If the
+official market-data host is unavailable from the chosen provider, select a
+hosting region/provider where the public API is permitted, subject to the
+provider's terms and applicable law.
+
+The Binance dashboard adapter currently does not claim account-specific
+taker fees. It marks fee data unavailable until a separate approved fee source
+is integrated; therefore it must not be treated as a fee-confirmed arbitrage
+candidate solely on ticker data.
