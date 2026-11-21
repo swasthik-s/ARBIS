@@ -38,7 +38,13 @@ def make_exchange(exchange_id: str):
     if cls is None:
         log.warning("%s is not available in the installed CCXT package", exchange_id)
         return None
-    return cls({"enableRateLimit": True, "timeout": 12000, "options": {"defaultType": "spot"}})
+    instance = cls({"enableRateLimit": True, "timeout": 12000, "options": {"defaultType": "spot"}})
+    if exchange_id == "binance":
+        # Official Binance public market-data-only REST host. No API key needed.
+        api = instance.urls.get("api", {})
+        if isinstance(api, dict) and api.get("public"):
+            api["public"] = "https://data-api.binance.vision/api/v3"
+    return instance
 
 
 def scan_once(exchanges, symbols, store, min_edge_pct, quantity, execute_paper):
